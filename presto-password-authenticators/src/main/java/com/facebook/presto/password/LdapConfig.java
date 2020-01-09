@@ -25,6 +25,10 @@ import java.util.concurrent.TimeUnit;
 public class LdapConfig
 {
     private String ldapUrl;
+    private String bindUser;
+    private String bindPassword;
+    private String userLoginAttribute;
+    private String userAttributeSearchFilter;
     private String userBindSearchPattern;
     private String groupAuthorizationSearchPattern;
     private String userBaseDistinguishedName;
@@ -35,6 +39,32 @@ public class LdapConfig
     public String getLdapUrl()
     {
         return ldapUrl;
+    }
+
+    @Config("ldap.bind-user")
+    @ConfigDescription("Bind User of LDAP Server")
+    public LdapConfig setBindUser(String bindUser)
+    {
+        this.bindUser = bindUser;
+        return this;
+    }
+
+    public String getBindUser()
+    {
+        return bindUser;
+    }
+
+    @Config("ldap.bind-password")
+    @ConfigDescription("Bind Password of LDAP Server")
+    public LdapConfig setBindPassword(String bindPassword)
+    {
+        this.bindPassword = bindPassword;
+        return this;
+    }
+
+    public String getBindPassword()
+    {
+        return bindPassword;
     }
 
     @Config("ldap.url")
@@ -95,6 +125,32 @@ public class LdapConfig
     public LdapConfig setLdapCacheTtl(Duration ldapCacheTtl)
     {
         this.ldapCacheTtl = ldapCacheTtl;
+        return this;
+    }
+
+    public String getUserLoginAttribute()
+    {
+        return userLoginAttribute;
+    }
+
+    @Config("ldap.user-login-attribute")
+    @ConfigDescription("Ldap attribute containing user's login name. Example: user.name@domain.com")
+    public LdapConfig setUserLoginAttribute(String userLoginAttribute)
+    {
+        this.userLoginAttribute = userLoginAttribute;
+        return this;
+    }
+
+    public String getUserAttributeSearchFilter()
+    {
+        return userAttributeSearchFilter;
+    }
+
+    @Config("ldap.user-attribute-search-filter")
+    @ConfigDescription("Ldap attribute containing user's login name. Example: sAMAccountName")
+    public LdapConfig setUserAttributeSearchFilter(String userAttributeSearchFilter)
+    {
+        this.userAttributeSearchFilter = userAttributeSearchFilter;
         return this;
     }
 }

@@ -37,6 +37,10 @@ public class TestLdapConfig
     {
         assertRecordedDefaults(recordDefaults(LdapConfig.class)
                 .setLdapUrl(null)
+                .setBindUser(null)
+                .setBindPassword(null)
+                .setUserAttributeSearchFilter(null)
+                .setUserLoginAttribute(null)
                 .setUserBindSearchPattern(null)
                 .setUserBaseDistinguishedName(null)
                 .setGroupAuthorizationSearchPattern(null)
@@ -48,6 +52,10 @@ public class TestLdapConfig
     {
         Map<String, String> properties = new ImmutableMap.Builder<String, String>()
                 .put("ldap.url", "ldaps://localhost:636")
+                .put("ldap.bind-user", "bind-user")
+                .put("ldap.bind-password", "bind-password")
+                .put("ldap.user-attribute-search-filter", "sAMAccountName")
+                .put("ldap.user-login-attribute", "userPrincipalName")
                 .put("ldap.user-bind-pattern", "uid=${USER},ou=org,dc=test,dc=com")
                 .put("ldap.user-base-dn", "dc=test,dc=com")
                 .put("ldap.group-auth-pattern", "&(objectClass=user)(memberOf=cn=group)(user=username)")
@@ -56,6 +64,10 @@ public class TestLdapConfig
 
         LdapConfig expected = new LdapConfig()
                 .setLdapUrl("ldaps://localhost:636")
+                .setBindUser("bind-user")
+                .setBindPassword("bind-password")
+                .setUserAttributeSearchFilter("sAMAccountName")
+                .setUserLoginAttribute("userPrincipalName")
                 .setUserBindSearchPattern("uid=${USER},ou=org,dc=test,dc=com")
                 .setUserBaseDistinguishedName("dc=test,dc=com")
                 .setGroupAuthorizationSearchPattern("&(objectClass=user)(memberOf=cn=group)(user=username)")
@@ -69,6 +81,10 @@ public class TestLdapConfig
     {
         assertValidates(new LdapConfig()
                 .setLdapUrl("ldaps://localhost")
+                .setBindUser("bind-password")
+                .setBindUser("bind-user")
+                .setUserAttributeSearchFilter("sAMAccountName")
+                .setUserLoginAttribute("userPrincipalName")
                 .setUserBindSearchPattern("uid=${USER},ou=org,dc=test,dc=com")
                 .setUserBaseDistinguishedName("dc=test,dc=com")
                 .setGroupAuthorizationSearchPattern("&(objectClass=user)(memberOf=cn=group)(user=username)"));
