@@ -37,7 +37,7 @@ public class TestLdapConfig
     {
         assertRecordedDefaults(recordDefaults(LdapConfig.class)
                 .setLdapUrl(null)
-                .setBindUser(null)
+                .setBindUserDN(null)
                 .setBindPassword(null)
                 .setUserAttributeSearchFilter(null)
                 .setUserLoginAttribute(null)
@@ -64,7 +64,7 @@ public class TestLdapConfig
 
         LdapConfig expected = new LdapConfig()
                 .setLdapUrl("ldaps://localhost:636")
-                .setBindUser("bind-user")
+                .setBindUserDN("bind-user")
                 .setBindPassword("bind-password")
                 .setUserAttributeSearchFilter("sAMAccountName")
                 .setUserLoginAttribute("userPrincipalName")
@@ -81,8 +81,8 @@ public class TestLdapConfig
     {
         assertValidates(new LdapConfig()
                 .setLdapUrl("ldaps://localhost")
-                .setBindUser("bind-password")
-                .setBindUser("bind-user")
+                .setBindUserDN("bind-password")
+                .setBindUserDN("bind-user")
                 .setUserAttributeSearchFilter("sAMAccountName")
                 .setUserLoginAttribute("userPrincipalName")
                 .setUserBindSearchPattern("uid=${USER},ou=org,dc=test,dc=com")

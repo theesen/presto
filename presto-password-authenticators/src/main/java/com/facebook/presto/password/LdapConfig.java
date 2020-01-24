@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class LdapConfig
 {
     private String ldapUrl;
-    private String bindUser;
+    private String bindUserDN; //TODO: Call DN
     private String bindPassword;
     private String userLoginAttribute;
     private String userAttributeSearchFilter;
@@ -41,17 +41,17 @@ public class LdapConfig
         return ldapUrl;
     }
 
-    @Config("ldap.bind-user")
-    @ConfigDescription("Bind User of LDAP Server")
-    public LdapConfig setBindUser(String bindUser)
+    public String getBindUserDN()
     {
-        this.bindUser = bindUser;
-        return this;
+        return bindUserDN;
     }
 
-    public String getBindUser()
+    @Config("ldap.bind-user")
+    @ConfigDescription("Bind User of LDAP Server")
+    public LdapConfig setBindUserDN(String bindUserDN)
     {
-        return bindUser;
+        this.bindUserDN = bindUserDN;
+        return this;
     }
 
     @Config("ldap.bind-password")

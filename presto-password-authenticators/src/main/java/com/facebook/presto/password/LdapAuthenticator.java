@@ -59,7 +59,7 @@ public class LdapAuthenticator
 {
     private static final Logger log = Logger.get(LdapAuthenticator.class);
 
-    private final Optional<String> bindUser;
+    private final Optional<String> bindUserDN;
     private final Optional<String> bindPassword;
     private final Optional<String> userLoginAttribute;
     private final Optional<String> userAttributeSearchFilter;
@@ -73,7 +73,7 @@ public class LdapAuthenticator
     public LdapAuthenticator(LdapConfig serverConfig)
     {
         String ldapUrl = requireNonNull(serverConfig.getLdapUrl(), "ldapUrl is null");
-        this.bindUser = Optional.ofNullable(serverConfig.getBindUser());
+        this.bindUserDN = Optional.ofNullable(serverConfig.getBindUserDN());
         this.bindPassword = Optional.ofNullable(serverConfig.getBindPassword());
         this.userLoginAttribute = Optional.ofNullable(serverConfig.getUserLoginAttribute());
         this.userAttributeSearchFilter = Optional.ofNullable(serverConfig.getUserAttributeSearchFilter());
@@ -83,7 +83,7 @@ public class LdapAuthenticator
         if (groupAuthorizationSearchPattern.isPresent()) {
             checkState(userBaseDistinguishedName.isPresent(), "Base distinguished name (DN) for user is null");
         }
-        if (bindUser.isPresent()) {
+        if (bindUserDN.isPresent()) {
             checkState(bindPassword.isPresent(), "Ldap bind-user password is null");
             checkState(userBaseDistinguishedName.isPresent(), "Base distinguished name (DN) for user is null");
             checkState(userLoginAttribute.isPresent(), "User login attribute to execute authentication is null");
@@ -118,14 +118,14 @@ public class LdapAuthenticator
         return authenticate(credentials.getUser(), credentials.getPassword());
     }
 
-    private String setLdapUserName(String user)
+    private String getLdapUserName(String defaultUserName)
             throws AuthenticationException
     {
-        if (!bindUser.isPresent()) {
-            return user;
+        if (!bindUserDN.isPresent()) {
+            return defaultUserName;
         }
         DirContext context = null;
-        String ldapBindUser = bindUser.orElseThrow(VerifyException::new);
+        String ldapBindUser = bindUserDN.orElseThrow(VerifyException::new);
         String ldapBindPassword = bindPassword.orElseThrow(VerifyException::new);
         String userBase = userBaseDistinguishedName.orElseThrow(VerifyException::new);
         String loginAttribute = userLoginAttribute.orElseThrow(VerifyException::new);
@@ -137,27 +137,23 @@ public class LdapAuthenticator
             context = createDirContext(environment);
             SearchControls searchControls = getSearchControl();
             searchControls.setReturningAttributes(new String[] {loginAttribute});
-            String searchFilter = userSearchFilter + "=" + user;
+            String searchFilter = userSearchFilter + "=" + defaultUserName; //TODO: Escape special characters. Make sure there is no inejction
             NamingEnumeration<SearchResult> search = context.search(userBase, searchFilter, searchControls);
-            SearchResult result = search.next(); // TODO: Test if this works in case no, 1 and more then 1 users are returned
+            SearchResult result = getUniqueUser(search);
             Attributes attributes = result.getAttributes();
             Attribute userPrincipalName = attributes.get(loginAttribute);
-            if (search.hasMoreElements()) {
-                throw new AuthenticationException("More than one user found matching the search filter");
-            }
             search.close();
-            return userPrincipalName.get().toString(); //TODO: not a huge fan of this?!
-        }
-        catch (NoSuchElementException e) {
-            throw new AuthenticationException("User not found in LDAP");
+            Object attributeValue = userPrincipalName.get();
+            checkState(attributeValue instanceof String);
+            return (String) attributeValue; //TODO: not a huge fan of this?!
         }
         catch (AuthenticationException e) {
-            log.debug("Authentication failed for user [%s]: %s", ldapBindUser, e.getMessage());
-            throw new AccessDeniedException("Invalid credentials");
+            log.debug("Authentication failed for bind user [%s]: %s", ldapBindUser, e.getMessage());
+            throw new AuthenticationException("Invalid credentials or User not found");
         }
         catch (NamingException e) {
             log.debug(e, "Authentication error for user [%s]", ldapBindUser);
-            throw new RuntimeException("Authentication error");
+            throw new AuthenticationException("Authentication error");
         }
         finally {
             if (context != null) {
@@ -166,12 +162,24 @@ public class LdapAuthenticator
         }
     }
 
-    //        TODO: 1. If ldap bind user present, follow alternativ auth flow
+    private SearchResult getUniqueUser(NamingEnumeration<SearchResult> search)
+            throws NamingException
+    {
+        if (!search.hasMoreElements()) {
+            throw new NonUniqueResultException("User not found matching the search filter");
+        }
+        SearchResult result = search.next(); // TODO: Test if this works in case no, 1 and more than 1 users are returned
+        if (search.hasMoreElements()) {
+            throw new NonUniqueResultException("More than one User found matching the search filter");
+        }
+        return result;
+    }
+
     private Principal authenticate(String user, String password)
     {
         DirContext context = null;
         try {
-            String ldapUserName = setLdapUserName(user);
+            String ldapUserName = getLdapUserName(user);
             Map<String, String> environment = createEnvironment(ldapUserName, password);
             context = createDirContext(environment);
             checkForGroupMembership(ldapUserName, context);
@@ -190,6 +198,16 @@ public class LdapAuthenticator
             if (context != null) {
                 closeContext(context);
             }
+        }
+    }
+
+    private static class NonUniqueResultException
+            extends RuntimeException
+    {
+
+        public NonUniqueResultException(String message)
+        {
+            super(message);
         }
     }
 
