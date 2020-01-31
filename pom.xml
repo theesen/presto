@@ -132,6 +132,7 @@
         <module>presto-proxy</module>
         <module>presto-kudu</module>
         <module>presto-elasticsearch</module>
+        <module>presto-bigquery</module>
     </modules>
 
     <dependencyManagement>
@@ -281,6 +282,12 @@
             <dependency>
                 <groupId>com.facebook.presto</groupId>
                 <artifactId>presto-mysql</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.facebook.presto</groupId>
+                <artifactId>presto-bigquery</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
